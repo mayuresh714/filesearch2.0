@@ -1,7 +1,7 @@
 import sqlite3
 import os
 import json
-
+from common_methods import make_file_content
 
 class sql_ops:
     def __init__(self,db_name = "filesearch.db"):
@@ -30,7 +30,7 @@ class sql_ops:
             print(e)
         return None
 
-    def execute_many(conn, query, list_of_params):
+    def execute_many(self,conn, query, list_of_params):
         try:
             cursor = conn.cursor()
             cursor.executemany(query, list_of_params)
@@ -86,16 +86,6 @@ class sql_ops:
         conn.close()
 
 
-    def select_null_encoding(self):
-        conn = self.create_connection()
-        query = "SELECT file_id,file_name FROM metadata WHERE encoding IS NULL"
-
-        rows = self.execute_query(conn, query)
-        conn.close()
-
-        return rows
-
-
     def load(self,obj):
         return json.loads(obj)
 
@@ -131,6 +121,35 @@ class sql_ops:
             row = self.execute_query( conn, query , (str(id),) )
             yield row[0]
 
+        conn.close()
+
+    def dump(self,vector):
+        return json.dumps( vector.tolist())
+
+    def select_null_encoding(self):
+        conn = self.create_connection()
+        query = "SELECT file_id, file_name,file_type,file_size,creation_date,accessed_date,modification_date,file_location FROM metadata WHERE encoding IS NULL"
+
+        rows = self.execute_query(conn, query)
+        conn.close()
+
+        return rows
+
+    def update_encoding_column( self,rows,encoding_func):
+        """
+        here take input of list of tuples each single tuple consistes of fileid,filename
+        """
+        conn = self.create_connection()
+
+        query = "UPDATE metadata SET encoding = ? WHERE file_id = ?"
+
+        for row in rows:
+            content = make_file_content(row[1:])
+            encoding = encoding_func( content ) ## here i am using only file name for vectorisation
+            params = ( self.dump(encoding) ,row[0])
+            self.execute_query(conn, query, params)
+
+        conn.commit()
         conn.close()
 
 # if __name__ == "__main__":
