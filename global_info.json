@@ -1,0 +1,5 @@
+{
+    "model_name":"bert",
+    "ignore_file_types": [".bin","__pycache__",".dist"],
+    "indexed_drives":["d:/"]
+}
