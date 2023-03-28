@@ -3,8 +3,18 @@
 import os
 import time
 import re
+from functools import lru_cache
+import json
+
+@lru_cache
+def load_json_file(path = 'file_config.json'):
+    with open(path, 'r') as f:
+        return json.load(f)
 
 
+def load_field_from_json(path = 'file_config.json' ,field= "ignore_file_types"):
+    content = load_json_file(path)
+    return content[field]
 
 
 class FileManager:
@@ -25,7 +35,7 @@ class FileManager:
 
     @staticmethod
     def compile_regex():
-        ignore_file_types = ['.bin',"__pycache__",".dist"]
+        ignore_file_types = load_field_from_json("global_info.json")
         pattern = '|'.join(ignore_file_types)
         regex = re.compile(pattern)
         return regex
@@ -94,10 +104,10 @@ def get_all_metadata(folder_path = r'D:\js calculator'):
     return file_manager.metadata_list
 
 
-# if __name__ == '__main__':
-#     path = r'D:\js calculator'
-#     obj = get_all_metadata(path)
-#     for i in obj:
-#         print(i,"\n")
+if __name__ == '__main__':
+    path = r'D:\pendrive\filesearch2.0'
+    obj = get_all_metadata(path)
+    for i in obj:
+        print(i,"\n")
 
      

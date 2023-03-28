@@ -26,13 +26,14 @@ class transformer_ops:
         self.__tokenizer_path   = None
         self.__loaded_model     = None
         self.__loaded_tokenizer = None
+        self.setter()
 
     
-    def setter(self,model_name):
+    def setter(self):
         self.__model_path     =  os.path.join(self.__parent_dir,"models")
         self.__tokenizer_path =  os.path.join(self.__parent_dir,"models")
         
-        self.__model_name = model_name.replace("/","@")
+        self.__model_name = self.__model_name.replace("/","@")
             
         model_folder = os.path.join(self.__model_path,self.__model_name)
 
@@ -151,5 +152,6 @@ def encode_model_bin(text):
 
 
 if __name__ == "__main__":
-    vec = encode_single_doc("the cat is strong")
-    print(len(vec))
+    print("ok")
+    # vec = encode_single_doc("the cat is strong")
+    # print(len(vec))

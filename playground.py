@@ -1,28 +1,17 @@
 
 import numpy as np
-from new_sql import create_connection,execute_query,fetch_id_and_encoding,get_result_per_ids
-from  work_with_model import encode_single_doc
+from new_sql import sql_ops
+from  work_with_model import transformer_ops as tr_ops
 
 
-doc_encoding_iter = None
 
-
-# def update_encoding_column( rows ):
-#     """
-#     here take input of list of tuples each single tuple consistes of fileid,filename
-#     """
-#     conn = create_connection()
-
-#     query = "UPDATE metadata SET encoding = ? WHERE file_id = ?"
-
-#     for row in rows:
-#         encoding = encode_single_doc(row[1]) ## here i am using only file name for vectorisation
-#         params = (encoding ,row[0])
-#         execute_query(conn, query, params)
-
-#     conn.commit()
-#     conn.close()
-
+def jaccard_sim(x, y):
+    """
+    Calculate the Jaccard similarity between two NumPy arrays x and y.
+    """
+    intersection = np.sum(x * y)
+    union = np.sum((x + y) > 0)
+    return intersection / union
 
 
 def cosine_sim(array1,array2):
@@ -36,49 +25,60 @@ def cosine_sim(array1,array2):
     # calculate cosine similarity
     return dot_product / (magnitude1 * magnitude2)
 
-   
 
 
-def similarity_score_cal(query):
-    """
-    A function that fetches the top k most similar items to a given input
-    using a pre-trained model.
-    """
-    global doc_encoding_iter
+class search_ops:
+
+    def __init__(self,k= 10 ):
+        self.k = k
+        self.doc_encoding_iter = None
+
+
+
+    def similarity_score_cal(self,query,db_obj,model_obj,similarity_func):
+        """
+        A function that fetches the top k most similar items to a given input
+        using a pre-trained model.
+        """
+        
+        
+        query_embedding = model_obj.encode_single_doc(text = query)
+
+        if self.doc_encoding_iter is None:
+            self.doc_encoding_iter = db_obj.fetch_id_and_encoding()
     
-    query_embedding = encode_single_doc(text = query)
-
-    if doc_encoding_iter is None:
-        doc_encoding_iter = fetch_id_and_encoding()
-   
-    for doc in doc_encoding_iter:
-        file_id = doc[0]
-        doc_embedding = doc[1]
-        similarity_score = cosine_sim(query_embedding, doc_embedding)
-        yield (file_id,similarity_score)
+        for doc in self.doc_encoding_iter:
+            file_id = doc[0]
+            doc_embedding = doc[1]
+            similarity_score =  similarity_func(query_embedding, doc_embedding)
+            yield (file_id,similarity_score)
 
 
-def get_top_k_docs(query, k=7):
-    similarity_scores = similarity_score_cal(query)
-    sorted_tuples = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
-    for i in range(0,len(sorted_tuples),k):
-        yield [row[0] for row in sorted_tuples[i:i+k]]
+    def get_top_k_docs(self,query,db_obj,model_obj,similarity_func,k = 10 ):
+        similarity_scores = self.similarity_score_cal(query,db_obj=db_obj,model_obj=model_obj,similarity_func=similarity_func)
+        sorted_tuples = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+        for i in range(0,len(sorted_tuples),k):
+            yield [row[0] for row in sorted_tuples[i:i+k]]
 
 
 if __name__ == "__main__":
+    modelobj = tr_ops("GPT_125M")
+    db_obj = sql_ops('filesearch.db')
+    search_obj = search_ops(k = 10 )
  
-#     # obj = fetch_id_and_encoding()
-#     # lis = list(obj)
-#     # print(len(lis[0][1]))
-    q = "photos"
-    print("query :" ,q)
-    obj =  get_top_k_docs(q,k=10)
-    res = list(next(obj))
     
-    for file in get_result_per_ids(res):
-        print(file)
-        print()
-    
+    stop = 1
+    while bool(stop):
+        query = input("enter query: ")
+        print("query :" ,query)
+        obj =  search_obj.get_top_k_docs(query,db_obj=db_obj,model_obj=modelobj,k=10,similarity_func=jaccard_sim)
+        res = list(next(obj))
+        for file in db_obj.get_result_per_ids(res):
+            print(file)
+            print()
+        print("/*"*50,"\n")
+        stop = input("should i stop?press enter to stop/1 to continue")
+        
     
 
 
