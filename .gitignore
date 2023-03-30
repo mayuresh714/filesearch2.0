@@ -1,4 +1,4 @@
 models/
 __pycache__/
 database/
-test.ipynb
+test.py

@@ -9,6 +9,8 @@ def jaccard_sim(x, y):
     """
     Calculate the Jaccard similarity between two NumPy arrays x and y.
     """
+    x = np.array(x)
+    y = np.array(y)
     intersection = np.sum(x * y)
     union = np.sum((x + y) > 0)
     return intersection / union
@@ -32,17 +34,18 @@ class search_ops:
     def __init__(self,k= 10 ):
         self.k = k
         self.doc_encoding_iter = None
+        # self.encoding_func = encoding_func
 
 
 
-    def similarity_score_cal(self,query,db_obj,model_obj,similarity_func):
+    def similarity_score_cal(self,query,db_obj,similarity_func,encoding_func):
         """
         A function that fetches the top k most similar items to a given input
         using a pre-trained model.
         """
         
         
-        query_embedding = model_obj.encode_single_doc(text = query)
+        query_embedding = encoding_func(query)
 
         if self.doc_encoding_iter is None:
             self.doc_encoding_iter = db_obj.fetch_id_and_encoding()
@@ -54,8 +57,8 @@ class search_ops:
             yield (file_id,similarity_score)
 
 
-    def get_top_k_docs(self,query,db_obj,model_obj,similarity_func,k = 10 ):
-        similarity_scores = self.similarity_score_cal(query,db_obj=db_obj,model_obj=model_obj,similarity_func=similarity_func)
+    def get_top_k_docs(self,query,db_obj,similarity_func,encoding_func,k = 10 ):
+        similarity_scores = self.similarity_score_cal(query,db_obj=db_obj,similarity_func=similarity_func,encoding_func= encoding_func)
         sorted_tuples = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
         for i in range(0,len(sorted_tuples),k):
             yield [row[0] for row in sorted_tuples[i:i+k]]
