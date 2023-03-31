@@ -1,13 +1,13 @@
 import sqlite3
 import os
 import json
-from common_methods import make_file_content
+from common_methods import make_file_content,parent_dir
 
 class sql_ops:
     def __init__(self,db_name = "filesearch.db"):
-        self.__parent_dir = os.path.dirname( os.path.abspath(__file__))
+        self.__parent_dir = parent_dir
         self.__db_name = db_name
-        self.__db_path = os.path.join(os.path.dirname( os.path.abspath(__file__)),"database" ,db_name)
+        self.__db_path = os.path.join(parent_dir,"database" ,db_name)
 
  
 
@@ -137,7 +137,7 @@ class sql_ops:
 
     def update_encoding_column( self,rows,encoding_func):
         """
-        here take input of list of tuples each single tuple consistes of fileid,filename
+        here take input of list of tuples each single tuple consistes of all filemetadata
         """
         conn = self.create_connection()
 

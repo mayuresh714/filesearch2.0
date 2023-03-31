@@ -1,5 +1,5 @@
 {
     "model_name":["bert"],
-    "ignore_file_types": [".bin","__pycache__",".dist",".git"],
+    "ignore_file_types": [".bin","__pycache__",".dist",".git",".vscode"],
     "indexed_drives":["d:/"]
 }

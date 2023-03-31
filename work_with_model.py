@@ -5,6 +5,7 @@ import torch
 # from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import transformers
 from functools import lru_cache
+from common_methods import parent_dir
 
 
 
@@ -21,14 +22,13 @@ def load_pickle_obj(path):
 class transformer_ops:
 
     def __init__(self,name):
-        self.__parent_dir       = os.path.dirname(os.path.abspath(__file__))
+        self.__parent_dir       = parent_dir
         self.__is_model_present = False
         self.__model_name       = name
         self.__model_path       = None
         self.__tokenizer_path   = None
         self.__loaded_model     = None
         self.__loaded_tokenizer = None
-        self.transformers_module = transformers
         self.setter()
 
     def access_model_for_tesing(self):
@@ -39,6 +39,12 @@ class transformer_ops:
     def set_models_rare_case(self,tokenizer,model):
         self.__loaded_model = model
         self.__loaded_tokenizer= tokenizer
+
+    def get_data_for_testing_purpose(self):
+        print(self.__is_model_present)
+        print(self.__model_name)
+        print(self.__model_path)
+        print(self.__tokenizer_path)
 
 
     
@@ -61,36 +67,15 @@ class transformer_ops:
 
         self.__model_path     =  os.path.join(model_folder,"model.pkl")
         self.__tokenizer_path =  os.path.join(model_folder,"tokenizer.pkl")
-        # print(__model_path, "\n",__tokenizer_path)
+        
 
-    def get_data_for_testing_purpose(self):
-        print(self.__is_model_present)
-        print(self.__model_name)
-        print(self.__model_path)
-        print(self.__tokenizer_path)
+
 
     #Mean Pooling - Take average of all tokens
     def mean_pooling(self,model_output, attention_mask):
         token_embeddings = model_output.last_hidden_state
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-
-    # #Encode text
-    # def encode(texts):
-    #     # Tokenize sentences
-    #     encoded_input = tokenizer(texts, padding=True, truncation=True, return_tensors='pt')
-
-    #     # Compute token embeddings
-    #     with torch.no_grad():
-    #         model_output = model(**encoded_input, return_dict=True)
-
-    #     # Perform pooling
-    #     embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
-
-    #     # Normalize embeddings
-    #     embeddings = F.normalize(embeddings, p=2, dim=1)
-        
-    #     return embeddings
 
     #Encode text
     def encode_from_official_doc_by_HF(self,texts,do_normalize = False):
@@ -111,8 +96,28 @@ class transformer_ops:
         
         return embeddings[0]
     
+    def download_and_save_model_pickle(self, model_name: str, tokenizer_class: str, model_class: str) -> None:
+        """
+        Downloads a pre-trained model and tokenizer from Hugging Face's Transformers library and saves them as pickle files.
 
-    def download_and_save_model_pickle(self,model_name,tokenizer_class,model_class):
+        Args:
+            model_name (str): Name of the pre-trained model to download.
+            tokenizer_class (str): Name of the tokenizer class to use for the pre-trained model.
+            model_class (str): Name of the model class to use for the pre-trained model.
+
+        Returns:
+            None: The function does not return anything, it just saves the pre-trained model and tokenizer as pickle files.
+
+        Raises:
+            None: The function does not raise any exceptions.
+
+        Example:
+            download_and_save_model_pickle('bert-base-uncased', 'BertTokenizer', 'BertModel')
+
+        Note:
+            This function assumes that the pre-trained model and tokenizer do not exist in the specified file paths, and will download and save them if they are not present. If they already exist, the function will print a message indicating that the model has already been downloaded and will not download it again.
+        """
+
         if self.__is_model_present:
             print(f"{model_name} already exists no need to download again ...")
         else:
@@ -126,7 +131,25 @@ class transformer_ops:
 
 
 
-    def load_model_pickle(self):
+    def load_model_pickle(self) -> None:
+        """
+        Loads a pre-trained model and tokenizer from pickle files and stores them as instance variables.
+
+        Args:
+            None: This function does not take any arguments.
+
+        Returns:
+            None: This function does not return anything, it just loads the pre-trained model and tokenizer from pickle files.
+
+        Raises:
+            None: This function does not raise any exceptions.
+
+        Example:
+            load_model_pickle()
+
+        Note:
+            This function assumes that the pre-trained model and tokenizer exist in the specified file paths, and will load them into instance variables if they are not already loaded. If they are already loaded, the function will not load them again.
+        """
         if self.__loaded_model is None:
             self.__loaded_model = load_pickle_obj(self.__model_path)
         if self.__loaded_tokenizer is None:
@@ -134,7 +157,26 @@ class transformer_ops:
         
 
 
-    def encode_single_doc(self,text):
+    def encode_single_doc(self, text: str) -> np.ndarray:
+        """
+        Encodes a single document by generating a vector representation using a pre-trained model and tokenizer.
+
+        Args:
+            text (str): The text to be encoded.
+
+        Returns:
+            np.ndarray: A numpy array representing the vector embedding of the input text.
+
+        Raises:
+            None: This function does not raise any exceptions.
+
+        Example:
+            encode_single_doc("This is an example sentence to be encoded.")
+
+        Note:
+            This function assumes that the pre-trained model and tokenizer have been loaded using the `load_model_pickle` method. If they have not been loaded, this method will load them automatically. 
+        """
+
         self.load_model_pickle()
         # Tokenize the text and convert to input format for the model
         input_ids = self.__loaded_tokenizer(text, return_tensors='pt').input_ids

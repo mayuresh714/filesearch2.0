@@ -1,5 +1,7 @@
+import os
 
-
+## global variables
+parent_dir = os.path.dirname( os.path.abspath(__file__))
 
 def make_file_content(row):
     """ the row has following metadata about file : (as per order)
@@ -30,5 +32,6 @@ def make_file_content(row):
 
 
 if __name__ == "__main__":
-    row = ("mk.py","pdf",230,"Tue Mar  7 10:01:25 2023","Tue Mar  7 10:01:25 2023","Wed Oct 21 22:55:37 2020",r"C:\Users\shree\OneDrive\Documents\21142_DEL_Comparator_expt.no. 05.pdf")
-    print(make_file_content(row))
+    # row = ("mk.py","pdf",230,"Tue Mar  7 10:01:25 2023","Tue Mar  7 10:01:25 2023","Wed Oct 21 22:55:37 2020",r"C:\Users\shree\OneDrive\Documents\21142_DEL_Comparator_expt.no. 05.pdf")
+    # print(make_file_content(row))
+    print(parent_dir)
